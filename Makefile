@@ -5,7 +5,7 @@ CPP_FLAGS = -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -fstack-usage -fcallgraph-i
 all:
 	$(GCC_PATH)arm-none-eabi-g++ -c funcs1.cpp funcs2.cpp $(CPP_FLAGS)
 	g++ -std=c++17 main.cpp -o meas.elf -O0 -g3
-	./meas.elf funcs1 funcs2
+	valgrind -s ./meas.elf funcs1 funcs2
 
 
 .PHONY: clean

@@ -112,7 +112,8 @@ static int find_pos(const std::list<std::string>& nodes, std::string_view node)
 		}
 		pos++;
 	}
-	return -1;
+	std::cerr << "Node not found" << std::endl;
+	std::terminate();
 }
 
 struct parsed_nodes {
