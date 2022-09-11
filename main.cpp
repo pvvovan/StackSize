@@ -100,4 +100,5 @@ int main(int argc, char* argv[])
 		}
 	}
 	std::cout << "Stack size" << std::endl;
+	return 0;
 }
