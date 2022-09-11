@@ -2,6 +2,10 @@
 #include <vector>
 #include <list>
 #include <memory>
+#include <string>
+#include <fstream>
+#include <string_view>
+
 
 class Graph
 {
@@ -77,8 +81,47 @@ bool Graph::isCyclic()
 	return false;
 }
 
+static std::string get_id(std::string_view str)
+{
+	int pos1 = str.find('"') + 1;
+	int pos2 = str.find('"', pos1);
+	return std::string{str.substr(pos1, pos2 - pos1)};
+}
+
+static int parse_nodes(int argc, char* argv[])
+{
+	for (int i = 1; i < argc; i++) {
+		std::string filename = argv[i];
+		std::fstream file_ci(filename + ".ci", std::fstream::in);
+		std::string line{};
+		std::getline(file_ci, line);
+		if (line.substr(0, 17).compare("graph: { title: \"") == 0) {
+			std::cout << line << std::endl;
+			while (std::getline(file_ci, line)) {
+				if (line.substr(0, 16).compare("node: { title: \"") == 0) {
+					std::string node_id = get_id(line);
+					if (node_id.compare("__indirect_call") == 0) {
+						std::cerr << "indirect call" << std::endl;
+						return 2;
+					}
+					std::cout << node_id << std::endl;
+				} else if (line.substr(0, 21).compare("edge: { sourcename: \"") == 0) {
+					std::cout << get_id(line) << std::endl;
+				} else if (line.compare("}") == 0) {
+					break;
+				} else {
+					std::cerr << "not supported" << std::endl;
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
+	
 	// Create a graph given in the above diagram
 	Graph g(4);
 	g.addEdge(0, 1);
@@ -93,10 +136,10 @@ int main(int argc, char* argv[])
 		std::cout << "Graph doesn't contain cycle" << std::endl;
 	}
 
-
 	if (argc > 1) {
-		for (int i = 1; i < argc; i++) {
-			std::cout << argv[i] << std::endl;
+		int res = parse_nodes(argc, argv);
+		if (res == 0) {
+			// check graph
 		}
 	}
 	std::cout << "Stack size" << std::endl;

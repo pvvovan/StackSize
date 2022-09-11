@@ -35,7 +35,7 @@ static void (*f[4])(int) = { f1, f2, f3, f4 };
 
 double call(int a)
 {
-	(f[a])(a);
+	// (f[a])(a);
 	f1(a);
 	f2(a);
 	f3(a);
