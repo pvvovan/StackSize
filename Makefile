@@ -4,3 +4,10 @@ CPP_FLAGS = -mcpu=cortex-m3 -mthumb -mfloat-abi=soft -fstack-usage -fcallgraph-i
 
 all:
 	$(GCC_PATH)arm-none-eabi-g++ -c funcs1.cpp funcs2.cpp $(CPP_FLAGS)
+	g++ -std=c++17 main.cpp -o meas.elf
+	./meas.elf funcs1 funcs2
+
+
+.PHONY: clean
+clean:
+	-rm *.su *.ci *.o meas.elf
