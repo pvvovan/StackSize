@@ -81,42 +81,82 @@ bool Graph::isCyclic()
 	return false;
 }
 
-static std::string get_id(std::string_view str)
+static std::string get_node_id(std::string_view str)
 {
 	int pos1 = str.find('"') + 1;
 	int pos2 = str.find('"', pos1);
 	return std::string{str.substr(pos1, pos2 - pos1)};
 }
 
-static int parse_nodes(int argc, char* argv[])
+static std::pair<std::string, std::string> get_edge_ids(std::string_view str)
 {
+	std::pair<std::string, std::string> res{};
+
+	int pos1 = str.find('"') + 1;
+	int pos2 = str.find('"', pos1);
+	res.first = std::string{str.substr(pos1, pos2 - pos1)};
+
+	int pos3 = str.find('"', pos2 + 1) + 1;
+	int pos4 = str.find('"', pos3);
+	res.second = std::string{str.substr(pos3, pos4 - pos3)};
+
+	return res;
+}
+
+static int find_pos(const std::list<std::string>& nodes, std::string_view node)
+{
+	int pos{0};
+	for (auto n : nodes) {
+		if (n.compare(node) == 0) {
+			return pos;
+		}
+		pos++;
+	}
+	return -1;
+}
+
+struct parsed_nodes {
+	std::list<std::string> nodes{};
+	std::list<std::pair<std::string, std::string>> edges{};
+	int status{0};
+};
+
+static parsed_nodes parse_nodes(int argc, char* argv[])
+{
+	parsed_nodes pn{};
 	for (int i = 1; i < argc; i++) {
 		std::string filename = argv[i];
 		std::fstream file_ci(filename + ".ci", std::fstream::in);
 		std::string line{};
 		std::getline(file_ci, line);
 		if (line.substr(0, 17).compare("graph: { title: \"") == 0) {
-			std::cout << line << std::endl;
+			// std::cout << line << std::endl;
 			while (std::getline(file_ci, line)) {
 				if (line.substr(0, 16).compare("node: { title: \"") == 0) {
-					std::string node_id = get_id(line);
+					std::string node_id = get_node_id(line);
 					if (node_id.compare("__indirect_call") == 0) {
 						std::cerr << "indirect call" << std::endl;
-						return 2;
+						pn.status = 2;
+						return pn;
 					}
-					std::cout << node_id << std::endl;
+					// std::cout << node_id << std::endl;
+					pn.nodes.emplace_back(node_id);
 				} else if (line.substr(0, 21).compare("edge: { sourcename: \"") == 0) {
-					std::cout << get_id(line) << std::endl;
+					// std::cout << get_id(line) << std::endl;
+					pn.edges.emplace_back(get_edge_ids(line));
 				} else if (line.compare("}") == 0) {
 					break;
 				} else {
 					std::cerr << "not supported" << std::endl;
-					return 1;
+					pn.status = 1;
+					return pn;
 				}
 			}
+		} else {
+			pn.status = 3;
 		}
 	}
-	return 0;
+	return pn;
 }
 
 int main(int argc, char* argv[])
@@ -130,18 +170,29 @@ int main(int argc, char* argv[])
 	// g.addEdge(2, 0);
 	g.addEdge(2, 3);
 	// g.addEdge(3, 3);
-	if (g.isCyclic()) {
-		std::cout << "Graph contains cycle" << std::endl;
-	} else {
-		std::cout << "Graph doesn't contain cycle" << std::endl;
-	}
+	// if (g.isCyclic()) {
+	// 	std::cout << "Graph contains cycle" << std::endl;
+	// } else {
+	// 	std::cout << "Graph doesn't contain cycle" << std::endl;
+	// }
 
 	if (argc > 1) {
-		int res = parse_nodes(argc, argv);
-		if (res == 0) {
+		parsed_nodes pn = parse_nodes(argc, argv);
+		if (pn.status == 0) {
 			// check graph
+			Graph call_graph(pn.nodes.size());
+			for (const auto& p : pn.edges) {
+				int first = find_pos(pn.nodes, p.first);
+				int second = find_pos(pn.nodes, p.second);
+				call_graph.addEdge(first, second);
+			}
+			if (call_graph.isCyclic()) {
+				std::cout << "Recursion detected" << std::endl;
+			} else {
+				std::cout << "No recursion detected" << std::endl;
+			}
 		}
 	}
-	std::cout << "Stack size" << std::endl;
+	// std::cout << "Stack size" << std::endl;
 	return 0;
 }

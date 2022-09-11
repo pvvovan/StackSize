@@ -33,9 +33,11 @@ static void f4(int)
 
 static void (*f[4])(int) = { f1, f2, f3, f4 };
 
+double call(int a);
+
 double call2(int a)
 {
-	(f[a])(a);
+	// (f[a])(a);
 	f1(a);
 	f2(a);
 	f3(a);
@@ -43,5 +45,6 @@ double call2(int a)
 	f1(a);
 	func2();
 	funcs2();
+	call(1);
 	return 1.1;
 }
