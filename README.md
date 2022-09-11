@@ -1,0 +1,2 @@
+# StackSize
+Stack consumption estimation
