@@ -45,6 +45,6 @@ double call2(int a)
 	f1(a);
 	func2();
 	funcs2();
-	call(1);
+	// call(1);
 	return 1.1;
 }

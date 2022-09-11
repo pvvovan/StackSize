@@ -161,25 +161,10 @@ static parsed_nodes parse_nodes(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-	
-	// Create a graph given in the above diagram
-	Graph g(4);
-	g.addEdge(0, 1);
-	g.addEdge(0, 2);
-	g.addEdge(1, 2);
-	// g.addEdge(2, 0);
-	g.addEdge(2, 3);
-	// g.addEdge(3, 3);
-	// if (g.isCyclic()) {
-	// 	std::cout << "Graph contains cycle" << std::endl;
-	// } else {
-	// 	std::cout << "Graph doesn't contain cycle" << std::endl;
-	// }
-
 	if (argc > 1) {
 		parsed_nodes pn = parse_nodes(argc, argv);
 		if (pn.status == 0) {
-			// check graph
+			// check graph for recursion
 			Graph call_graph(pn.nodes.size());
 			for (const auto& p : pn.edges) {
 				int first = find_pos(pn.nodes, p.first);
@@ -193,6 +178,5 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	// std::cout << "Stack size" << std::endl;
 	return 0;
 }
