@@ -88,6 +88,25 @@ static std::string get_node_id(std::string_view str)
 	return std::string{str.substr(pos1, pos2 - pos1)};
 }
 
+struct func_label {
+	std::string label{};
+	bool external{};
+};
+
+static func_label get_node(std::string_view str)
+{
+	func_label node{};
+	node.external = false;
+	int pos1 = str.find("label: \"") + 8;
+	int pos2 = str.find('"', pos1);
+	node.label = std::string{str.substr(pos1, pos2 - pos1)};
+	int pos3 = str.find("shape : ellipse", pos2);
+	if (pos3 > 0) {
+		node.external = true;
+	}
+	return node;
+}
+
 static std::pair<std::string, std::string> get_edge_ids(std::string_view str)
 {
 	std::pair<std::string, std::string> res{};
@@ -118,6 +137,7 @@ static int find_pos(const std::list<std::string>& nodes, std::string_view node)
 
 struct parsed_nodes {
 	std::list<std::string> nodes{};
+	std::list<func_label> labels{};
 	std::list<std::pair<std::string, std::string>> edges{};
 	int status{0};
 };
@@ -131,7 +151,6 @@ static parsed_nodes parse_nodes(int argc, char* argv[])
 		std::string line{};
 		std::getline(file_ci, line);
 		if (line.substr(0, 17).compare("graph: { title: \"") == 0) {
-			// std::cout << line << std::endl;
 			while (std::getline(file_ci, line)) {
 				if (line.substr(0, 16).compare("node: { title: \"") == 0) {
 					std::string node_id = get_node_id(line);
@@ -140,10 +159,11 @@ static parsed_nodes parse_nodes(int argc, char* argv[])
 						pn.status = 2;
 						return pn;
 					}
-					// std::cout << node_id << std::endl;
 					pn.nodes.emplace_back(node_id);
+					auto node = get_node(line);
+					std::cout << node.label << std::endl;
+					pn.labels.emplace_back(node);
 				} else if (line.substr(0, 21).compare("edge: { sourcename: \"") == 0) {
-					// std::cout << get_id(line) << std::endl;
 					pn.edges.emplace_back(get_edge_ids(line));
 				} else if (line.compare("}") == 0) {
 					break;
@@ -155,6 +175,7 @@ static parsed_nodes parse_nodes(int argc, char* argv[])
 			}
 		} else {
 			pn.status = 3;
+			return pn;
 		}
 	}
 	return pn;
