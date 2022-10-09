@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string_view>
 #include <deque>
+#include <iterator>
 
 
 class Graph
@@ -375,6 +376,8 @@ int main(int argc, char* argv[])
 
 	auto find_max = []() {
 		int max{0};
+		int pos{0};
+		int max_pos{0};
 		for (const auto& r : all_routes) {
 			int total{0};
 			for (auto el : r) {
@@ -382,9 +385,18 @@ int main(int argc, char* argv[])
 			}
 			if (total > max) {
 				max = total;
+				max_pos = pos;
 			}
+			pos++;
 		}
-		std::cout << "Max stack usage is " << max << " bytes" << std::endl;
+
+		auto ri = all_routes.cbegin();
+		std::advance(ri, max_pos);
+		for (auto el = ri->cbegin(); el != ri->cend(); el++) {
+			std::cout << (*el)->name;
+			std::cout << " ---> ";
+		}
+		std::cout << "Max stack usage is " << max << " bytes!!!" << std::endl;
 	};
 	find_max();
 
