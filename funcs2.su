@@ -1,0 +1,7 @@
+funcs2.cpp:3:6:void funcs2()	16	static
+funcs2.cpp:8:13:void func2()	264	static
+funcs2.cpp:14:13:void f1(int)	24	static
+funcs2.cpp:19:13:void f2(int)	24	static
+funcs2.cpp:24:13:void f3(int)	24	static
+funcs2.cpp:29:13:void f4(int)	24	static
+funcs2.cpp:38:8:double call2(int, double)	24	static

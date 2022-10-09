@@ -1,0 +1,21 @@
+graph: { title: "funcs1.cpp"
+node: { title: "_Z5func1v" label: "void func1()\nfuncs1.cpp:3:6" }
+node: { title: "funcs1.cpp:_ZL5func2v" label: "void func2()\nfuncs1.cpp:8:13" }
+node: { title: "memset" label: "void* __builtin_memset(void*, int, unsigned int)\n<built-in>" shape : ellipse }
+edge: { sourcename: "funcs1.cpp:_ZL5func2v" targetname: "memset" }
+edge: { sourcename: "funcs1.cpp:_ZL5func2v" targetname: "_Z5func1v" label: "funcs1.cpp:11:7" }
+node: { title: "funcs1.cpp:_ZL2f1i" label: "void f1(int)\nfuncs1.cpp:14:13" }
+node: { title: "funcs1.cpp:_ZL2f2i" label: "void f2(int)\nfuncs1.cpp:19:13" }
+node: { title: "funcs1.cpp:_ZL2f3i" label: "void f3(int)\nfuncs1.cpp:24:13" }
+node: { title: "funcs1.cpp:_ZL2f4i" label: "void f4(int)\nfuncs1.cpp:29:13" }
+node: { title: "_Z4calli" label: "double call(int)\nfuncs1.cpp:36:8" }
+edge: { sourcename: "_Z4calli" targetname: "funcs1.cpp:_ZL2f1i" label: "funcs1.cpp:39:4" }
+edge: { sourcename: "_Z4calli" targetname: "funcs1.cpp:_ZL2f2i" label: "funcs1.cpp:40:4" }
+edge: { sourcename: "_Z4calli" targetname: "funcs1.cpp:_ZL2f3i" label: "funcs1.cpp:41:4" }
+edge: { sourcename: "_Z4calli" targetname: "funcs1.cpp:_ZL2f4i" label: "funcs1.cpp:42:4" }
+edge: { sourcename: "_Z4calli" targetname: "funcs1.cpp:_ZL2f1i" label: "funcs1.cpp:43:4" }
+edge: { sourcename: "_Z4calli" targetname: "funcs1.cpp:_ZL5func2v" label: "funcs1.cpp:44:7" }
+edge: { sourcename: "_Z4calli" targetname: "_Z5func1v" label: "funcs1.cpp:45:7" }
+node: { title: "_Z5call2id" label: "double call2(int, double)\nfuncs2.h:4:8" shape : ellipse }
+edge: { sourcename: "_Z4calli" targetname: "_Z5call2id" label: "funcs1.cpp:46:7" }
+}

@@ -302,8 +302,18 @@ int main(int argc, char* argv[])
 		}
 
 		parse_stack_use(pn, argc, argv);
+		for (const auto& fl : pn.labels) {
+			func_node fn{};
+			fn.name = fl.label;
+			fn.stack_use = fl.stack_usage;
+			all_nodes.emplace_front(fn);
+		}
+		for (const auto& ed : pn.edges) {
+			std::cout << ed.first << " " << ed.second << std::endl;
+		}
 	}
 
+	all_nodes.clear();
 	for (int i = 0; i < 8; i++) {
 		all_nodes.emplace_front(func_node{});
 	}
