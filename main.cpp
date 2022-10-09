@@ -91,6 +91,8 @@ static std::string get_node_id(std::string_view str)
 struct func_label {
 	std::string label{};
 	bool external{};
+	std::string translation_unit{};
+	int stack_usage{-1};
 };
 
 static func_label get_node(std::string_view str)
@@ -161,7 +163,7 @@ static parsed_nodes parse_nodes(int argc, char* argv[])
 					}
 					pn.nodes.emplace_back(node_id);
 					auto node = get_node(line);
-					std::cout << node.label << std::endl;
+					node.translation_unit = filename;
 					pn.labels.emplace_back(node);
 				} else if (line.substr(0, 21).compare("edge: { sourcename: \"") == 0) {
 					pn.edges.emplace_back(get_edge_ids(line));
@@ -179,6 +181,81 @@ static parsed_nodes parse_nodes(int argc, char* argv[])
 		}
 	}
 	return pn;
+}
+
+static std::string get_subline(const std::string_view label)
+{
+	std::size_t n = label.find("\\n") + 2;
+	std::string subline {label.substr(n, label.size() - n)};
+	subline += ':';
+
+	n -= 2;
+	subline += label.substr(0, n);
+	return subline;
+}
+
+static std::string get_func_signature(const std::string_view label)
+{
+	std::size_t n = label.find("\\n");
+	return std::string{label.substr(0, n)};
+}
+
+static void find_in_su(func_label& f_lbl, std::string file_prefix)
+{
+	std::string func_signature = get_func_signature(f_lbl.label);
+	std::fstream file_su(file_prefix + ".su", std::fstream::in);
+	std::string line{};
+	while (std::getline(file_su, line)) {
+		auto pos = line.find(func_signature);
+		if (pos != std::string::npos) {
+			auto tab_pos = line.find('\t');
+			if (tab_pos == std::string::npos) {
+				std::cerr << "TAB not found" << std::endl;
+				std::terminate();
+			}
+			tab_pos += 1;
+			f_lbl.stack_usage = std::stoi(line.substr(tab_pos));
+			break;
+		}
+	}
+}
+
+static void parse_stack_use(parsed_nodes& pn, int argc, char* argv[])
+{
+	for (auto& lbl : pn.labels) {
+		if (lbl.external == false) {
+			std::string su_subline = get_subline(lbl.label);
+			std::fstream file_su(lbl.translation_unit + ".su", std::fstream::in);
+			std::string line{};
+			bool su_exists{false};
+			while (std::getline(file_su, line)) {
+				auto pos = line.find(su_subline);
+				if (pos != std::string::npos) {
+					auto tab_pos = line.find('\t');
+					if (tab_pos == std::string::npos) {
+						std::cerr << "TAB not found" << std::endl;
+						std::terminate();
+					}
+					tab_pos += 1;
+					lbl.stack_usage = std::stoi(line.substr(tab_pos));
+					su_exists = true;
+					break;
+				}
+			}
+			if (su_exists == false) {
+				std::cerr << "Stack usage not found" << std::endl;
+				std::terminate();
+			}
+		} else {
+			for (int i = 1; i < argc; i++) {
+				find_in_su(lbl, argv[i]);
+			}
+		}
+		if (lbl.stack_usage == -1) {
+			std::cout << "Default 8 bytes stack is for: " << lbl.label << std::endl;
+			lbl.stack_usage = 8;
+		}
+	}
 }
 
 int main(int argc, char* argv[])
@@ -199,6 +276,8 @@ int main(int argc, char* argv[])
 				std::cout << "No recursion detected" << std::endl;
 			}
 		}
+
+		parse_stack_use(pn, argc, argv);
 	}
 	return 0;
 }
