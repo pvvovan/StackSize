@@ -392,9 +392,18 @@ int main(int argc, char* argv[])
 
 		auto ri = all_routes.cbegin();
 		std::advance(ri, max_pos);
+		std::size_t ind{0};
 		for (auto el = ri->cbegin(); el != ri->cend(); el++) {
-			std::cout << (*el)->name;
-			std::cout << " ---> ";
+			for (std::size_t i{0}; i < ind; i++) {
+				std::cout << " ";
+			}
+			ind++;
+			std::cout << (*el)->name << " (" << (*el)->stack_use << " bytes)";
+			if (ind < ri->size()) {
+				std::cout << " -> " << std::endl;
+			} else {
+				std::cout << std::endl;
+			}
 		}
 		std::cout << "Max stack usage is " << max << " bytes!!!" << std::endl;
 	};
