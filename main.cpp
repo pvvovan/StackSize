@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include <string_view>
+#include <deque>
 
 
 class Graph
@@ -258,6 +259,29 @@ static void parse_stack_use(parsed_nodes& pn, int argc, char* argv[])
 	}
 }
 
+class func_node {
+public:
+	std::string name{};
+	int stack_use{};
+	std::list<const func_node*> calls{};
+};
+
+std::list<std::list<const func_node*>> all_routes{};
+void depth_first_search(const func_node& node, std::list<const func_node*> route)
+{
+	if (node.calls.size() == 0) {
+		all_routes.push_back(route);
+	} else {
+		for (auto c_node : node.calls) {
+			std::list<const func_node*> c_route{route};
+			c_route.push_back(c_node);
+			depth_first_search(*c_node, c_route);
+		}
+	}
+}
+
+static std::deque<func_node> all_nodes{};
+
 int main(int argc, char* argv[])
 {
 	if (argc > 1) {
@@ -279,5 +303,80 @@ int main(int argc, char* argv[])
 
 		parse_stack_use(pn, argc, argv);
 	}
+
+	for (int i = 0; i < 8; i++) {
+		all_nodes.emplace_front(func_node{});
+	}
+
+	all_nodes[0].name = "0";
+	all_nodes[0].stack_use = 12;
+	all_nodes[0].calls.emplace_back(&all_nodes[1]);
+
+	all_nodes[1].name = "1";
+	all_nodes[1].stack_use = 32;
+	all_nodes[1].calls.emplace_back(&all_nodes[2]);
+
+	all_nodes[2].name = "2";
+	all_nodes[2].stack_use = 18;
+
+	all_nodes[3].name = "3";
+	all_nodes[3].stack_use = 24;
+	all_nodes[3].calls.emplace_back(&all_nodes[0]);
+	all_nodes[3].calls.emplace_back(&all_nodes[1]);
+	all_nodes[3].calls.emplace_back(&all_nodes[2]);
+
+	all_nodes[4].name = "4";
+	all_nodes[4].stack_use = 4;
+	all_nodes[4].calls.emplace_back(&all_nodes[3]);
+	all_nodes[4].calls.emplace_back(&all_nodes[5]);
+
+	all_nodes[5].name = "5";
+	all_nodes[5].stack_use = 8;
+	all_nodes[5].calls.emplace_back(&all_nodes[3]);
+	all_nodes[5].calls.emplace_back(&all_nodes[6]);
+
+	all_nodes[6].name = "6";
+	all_nodes[6].stack_use = 16;
+	all_nodes[6].calls.emplace_back(&all_nodes[2]);
+	all_nodes[6].calls.emplace_back(&all_nodes[3]);
+	all_nodes[6].calls.emplace_back(&all_nodes[7]);
+
+	all_nodes[7].name = "7";
+	all_nodes[7].stack_use = 32;
+
+	// for (int i = 0; i < 8; i++) {
+	// 	depth_first_search(all_nodes[i], std::list<const func_node*>{&all_nodes[i]});
+	// }
+
+	// auto print_routes = []() {
+	// 	for (auto r : all_routes) {
+	// 		for (auto f : r) {
+	// 			std::cout << f->name << " ";
+	// 		}
+	// 		std::cout << std::endl;
+	// 	}
+	// };
+
+	for (const auto& n : all_nodes) {
+		depth_first_search(n, std::list<const func_node*>{&n});
+	}
+
+	// print_routes();
+
+	auto find_max = []() {
+		int max{0};
+		for (const auto& r : all_routes) {
+			int total{0};
+			for (auto el : r) {
+				total += el->stack_use;
+			}
+			if (total > max) {
+				max = total;
+			}
+		}
+		std::cout << "Max stack usage is " << max << " bytes" << std::endl;
+	};
+	find_max();
+
 	return 0;
 }
