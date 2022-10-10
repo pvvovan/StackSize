@@ -92,6 +92,7 @@ static std::string get_node_id(std::string_view str)
 
 struct func_label {
 	std::string label{};
+	std::string title{};
 	bool external{};
 	std::string translation_unit{};
 	int stack_usage{-1};
@@ -104,10 +105,20 @@ static func_label get_node(std::string_view str)
 	int pos1 = str.find("label: \"") + 8;
 	int pos2 = str.find('"', pos1);
 	node.label = std::string{str.substr(pos1, pos2 - pos1)};
+	
 	int pos3 = str.find("shape : ellipse", pos2);
 	if (pos3 > 0) {
 		node.external = true;
 	}
+
+	pos1 = str.find("node: { title: \"") + 16;
+	if (pos1 != 16) {
+		std::cerr << "Title is missing" << std::endl;
+		std::terminate();
+	}
+	pos2 = str.find('"', pos1);
+	node.title = std::string{str.substr(pos1, pos2 - pos1)};
+
 	return node;
 }
 
@@ -263,6 +274,7 @@ static void parse_stack_use(std::list<func_label>& labels, int argc, char* argv[
 class func_node {
 public:
 	std::string name{};
+	std::string title{};
 	int stack_use{};
 	std::list<const func_node*> calls{};
 };
@@ -279,6 +291,17 @@ void depth_first_search(const func_node& node, std::list<const func_node*> route
 			depth_first_search(*c_node, c_route);
 		}
 	}
+}
+
+func_node& find_node(std::deque<func_node>& nodes, std::string title)
+{
+	for (auto& n : nodes) {
+		if (title == n.title) {
+			return n;
+		}
+	}
+	std::cerr << "Edge not found" << std::endl;
+	std::terminate();
 }
 
 static std::deque<func_node> all_nodes{};
@@ -314,55 +337,58 @@ int main(int argc, char* argv[])
 			func_node fn{};
 			fn.name = fl.label;
 			fn.stack_use = fl.stack_usage;
-			std::cout << fn.name << std::endl;
+			fn.title = fl.title;
+			// std::cout << fn.title << std::endl;
 			all_nodes.emplace_front(fn);
 		}
 		std::cout << all_nodes.size() << std::endl;
-		// for (const auto& ed : pn.edges) {
-		// 	std::cout << ed.first << " " << ed.second << std::endl;
-		// }
+		for (const auto& ed : pn.edges) {
+			func_node& parent = find_node(all_nodes, ed.first);
+			const func_node& child = find_node(all_nodes, ed.second);
+			parent.calls.emplace_back(&child);
+		}
 	}
 
-	all_nodes.clear();
-	for (int i = 0; i < 8; i++) {
-		all_nodes.emplace_front(func_node{});
-	}
+	// all_nodes.clear();
+	// for (int i = 0; i < 8; i++) {
+	// 	all_nodes.emplace_front(func_node{});
+	// }
 
-	all_nodes[0].name = "0";
-	all_nodes[0].stack_use = 12;
-	all_nodes[0].calls.emplace_back(&all_nodes[1]);
+	// all_nodes[0].name = "0";
+	// all_nodes[0].stack_use = 12;
+	// all_nodes[0].calls.emplace_back(&all_nodes[1]);
 
-	all_nodes[1].name = "1";
-	all_nodes[1].stack_use = 32;
-	all_nodes[1].calls.emplace_back(&all_nodes[2]);
+	// all_nodes[1].name = "1";
+	// all_nodes[1].stack_use = 32;
+	// all_nodes[1].calls.emplace_back(&all_nodes[2]);
 
-	all_nodes[2].name = "2";
-	all_nodes[2].stack_use = 18;
+	// all_nodes[2].name = "2";
+	// all_nodes[2].stack_use = 18;
 
-	all_nodes[3].name = "3";
-	all_nodes[3].stack_use = 24;
-	all_nodes[3].calls.emplace_back(&all_nodes[0]);
-	all_nodes[3].calls.emplace_back(&all_nodes[1]);
-	all_nodes[3].calls.emplace_back(&all_nodes[2]);
+	// all_nodes[3].name = "3";
+	// all_nodes[3].stack_use = 24;
+	// all_nodes[3].calls.emplace_back(&all_nodes[0]);
+	// all_nodes[3].calls.emplace_back(&all_nodes[1]);
+	// all_nodes[3].calls.emplace_back(&all_nodes[2]);
 
-	all_nodes[4].name = "4";
-	all_nodes[4].stack_use = 4;
-	all_nodes[4].calls.emplace_back(&all_nodes[3]);
-	all_nodes[4].calls.emplace_back(&all_nodes[5]);
+	// all_nodes[4].name = "4";
+	// all_nodes[4].stack_use = 4;
+	// all_nodes[4].calls.emplace_back(&all_nodes[3]);
+	// all_nodes[4].calls.emplace_back(&all_nodes[5]);
 
-	all_nodes[5].name = "5";
-	all_nodes[5].stack_use = 8;
-	all_nodes[5].calls.emplace_back(&all_nodes[3]);
-	all_nodes[5].calls.emplace_back(&all_nodes[6]);
+	// all_nodes[5].name = "5";
+	// all_nodes[5].stack_use = 8;
+	// all_nodes[5].calls.emplace_back(&all_nodes[3]);
+	// all_nodes[5].calls.emplace_back(&all_nodes[6]);
 
-	all_nodes[6].name = "6";
-	all_nodes[6].stack_use = 16;
-	all_nodes[6].calls.emplace_back(&all_nodes[2]);
-	all_nodes[6].calls.emplace_back(&all_nodes[3]);
-	all_nodes[6].calls.emplace_back(&all_nodes[7]);
+	// all_nodes[6].name = "6";
+	// all_nodes[6].stack_use = 16;
+	// all_nodes[6].calls.emplace_back(&all_nodes[2]);
+	// all_nodes[6].calls.emplace_back(&all_nodes[3]);
+	// all_nodes[6].calls.emplace_back(&all_nodes[7]);
 
-	all_nodes[7].name = "7";
-	all_nodes[7].stack_use = 32;
+	// all_nodes[7].name = "7";
+	// all_nodes[7].stack_use = 32;
 
 	// for (int i = 0; i < 8; i++) {
 	// 	depth_first_search(all_nodes[i], std::list<const func_node*>{&all_nodes[i]});
