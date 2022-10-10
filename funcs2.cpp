@@ -45,6 +45,6 @@ double call2(int a, double d)
 	f1(a);
 	func2();
 	funcs2();
-	// call(1);
+	// call(1); // simulate recursion
 	return d + 1.1;
 }

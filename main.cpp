@@ -216,15 +216,15 @@ static void find_in_su(func_label& f_lbl, std::string file_prefix)
 				std::terminate();
 			}
 			tab_pos += 1;
-			f_lbl.stack_usage = std::stoi(line.substr(tab_pos));
+			f_lbl.stack_usage = -2; // std::stoi(line.substr(tab_pos));
 			break;
 		}
 	}
 }
 
-static void parse_stack_use(parsed_nodes& pn, int argc, char* argv[])
+static void parse_stack_use(std::list<func_label>& labels, int argc, char* argv[])
 {
-	for (auto& lbl : pn.labels) {
+	for (auto& lbl : labels) {
 		if (lbl.external == false) {
 			std::string su_subline = get_subline(lbl.label);
 			std::fstream file_su(lbl.translation_unit + ".su", std::fstream::in);
@@ -302,16 +302,25 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		parse_stack_use(pn, argc, argv);
+		parse_stack_use(pn.labels, argc, argv);
+		auto cmp = [](const func_label& a, const func_label& b) {return a.label < b.label;};
+		auto eq = [](const func_label& a, const func_label& b) {return a.label == b.label;};
+		pn.labels.sort(cmp);
+		pn.labels.unique(eq);
 		for (const auto& fl : pn.labels) {
+			if (fl.stack_usage == -2) {
+				continue;
+			}
 			func_node fn{};
 			fn.name = fl.label;
 			fn.stack_use = fl.stack_usage;
+			std::cout << fn.name << std::endl;
 			all_nodes.emplace_front(fn);
 		}
-		for (const auto& ed : pn.edges) {
-			std::cout << ed.first << " " << ed.second << std::endl;
-		}
+		std::cout << all_nodes.size() << std::endl;
+		// for (const auto& ed : pn.edges) {
+		// 	std::cout << ed.first << " " << ed.second << std::endl;
+		// }
 	}
 
 	all_nodes.clear();
