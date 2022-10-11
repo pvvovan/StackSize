@@ -11,80 +11,6 @@
 #include <queue>
 
 
-class Graph
-{
-	int V;    // No. of vertices
-	std::vector<std::list<int>> adj{};    // Pointer to an array containing adjacency lists
-	bool isCyclicUtil(int v, bool visited[], bool *rs);  // used by isCyclic()
-public:
-	Graph(int V);   // Constructor
-	void addEdge(int v, int w);   // to add an edge to graph
-	bool isCyclic();    // returns true if there is a cycle in this graph
-};
-
-Graph::Graph(int V)
-{
-	this->V = V;
-	adj.reserve(V);
-	for (int i = 0; i < V; i++) {
-		adj.push_back(std::list<int>{});
-	}
-}
-
-void Graph::addEdge(int v, int w)
-{
-	adj[v].push_back(w); // Add w to v’s list.
-}
-
-// This function is a variation of DFSUtil() in 
-// https://www.geeksforgeeks.org/archives/18212
-bool Graph::isCyclicUtil(int v, bool visited[], bool *recStack)
-{
-	if (visited[v] == false) {
-		// Mark the current node as visited and part of recursion stack
-		visited[v] = true;
-		recStack[v] = true;
-
-		// Recur for all the vertices adjacent to this vertex
-		std::list<int>::iterator i;
-		for (i = adj[v].begin(); i != adj[v].end(); ++i) {
-			if ( !visited[*i] && isCyclicUtil(*i, visited, recStack) ) {
-				return true;
-			} else if (recStack[*i]) {
-				return true;
-			} else {
-				// Do nothing
-			}
-		}
-
-	}
-	recStack[v] = false;  // remove the vertex from recursion stack
-	return false;
-}
-
-// Returns true if the graph contains a cycle, else false.
-// This function is a variation of DFS() in 
-// https://www.geeksforgeeks.org/archives/18212
-bool Graph::isCyclic()
-{
-	// Mark all the vertices as not visited and not part of recursion stack
-	std::unique_ptr<bool[]> visited = std::make_unique<bool[]>(V);
-	std::unique_ptr<bool[]> recStack = std::make_unique<bool[]>(V);
-	for (int i = 0; i < V; i++) {
-		visited[i] = false;
-		recStack[i] = false;
-	}
-
-	// Call the recursive helper function to detect cycle in different DFS trees
-	for (int i = 0; i < V; i++) {
-		if ( !visited[i] && isCyclicUtil(i, &visited[0], &recStack[0])) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
 static std::string get_node_id(std::string_view str)
 {
 	int pos1 = str.find('"') + 1;
@@ -137,19 +63,6 @@ static std::pair<std::string, std::string> get_edge_ids(std::string_view str)
 	res.second = std::string{str.substr(pos3, pos4 - pos3)};
 
 	return res;
-}
-
-static int find_pos(const std::list<std::string>& nodes, std::string_view node)
-{
-	int pos{0};
-	for (auto n : nodes) {
-		if (n.compare(node) == 0) {
-			return pos;
-		}
-		pos++;
-	}
-	std::cerr << "Node not found" << std::endl;
-	std::terminate();
 }
 
 struct parsed_nodes {
@@ -357,20 +270,6 @@ int main(int argc, char* argv[])
 			std::cerr << "Indirect calls are not supported" << std::endl;
 			std::terminate();
 		}
-		if (pn.status == 0) {
-			// check graph for recursion
-			Graph call_graph(pn.nodes.size());
-			for (const auto& p : pn.edges) {
-				int first = find_pos(pn.nodes, p.first);
-				int second = find_pos(pn.nodes, p.second);
-				call_graph.addEdge(first, second);
-			}
-			if (call_graph.isCyclic()) {
-				std::cout << "Recursion detected" << std::endl;
-			} else {
-				std::cout << "No recursion detected" << std::endl;
-			}
-		}
 
 		parse_stack_use(pn.labels, argc, argv);
 		auto cmp = [](const func_label& a, const func_label& b) {return a.label < b.label;};
@@ -396,61 +295,6 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	// all_nodes.clear();
-	// for (int i = 0; i < 8; i++) {
-	// 	all_nodes.emplace_front(func_node{});
-	// }
-
-	// all_nodes[0].name = "0";
-	// all_nodes[0].stack_use = 12;
-	// all_nodes[0].calls.emplace_back(&all_nodes[1]);
-
-	// all_nodes[1].name = "1";
-	// all_nodes[1].stack_use = 32;
-	// all_nodes[1].calls.emplace_back(&all_nodes[2]);
-
-	// all_nodes[2].name = "2";
-	// all_nodes[2].stack_use = 18;
-
-	// all_nodes[3].name = "3";
-	// all_nodes[3].stack_use = 24;
-	// all_nodes[3].calls.emplace_back(&all_nodes[0]);
-	// all_nodes[3].calls.emplace_back(&all_nodes[1]);
-	// all_nodes[3].calls.emplace_back(&all_nodes[2]);
-
-	// all_nodes[4].name = "4";
-	// all_nodes[4].stack_use = 4;
-	// all_nodes[4].calls.emplace_back(&all_nodes[3]);
-	// all_nodes[4].calls.emplace_back(&all_nodes[5]);
-
-	// all_nodes[5].name = "5";
-	// all_nodes[5].stack_use = 8;
-	// all_nodes[5].calls.emplace_back(&all_nodes[3]);
-	// all_nodes[5].calls.emplace_back(&all_nodes[6]);
-
-	// all_nodes[6].name = "6";
-	// all_nodes[6].stack_use = 16;
-	// all_nodes[6].calls.emplace_back(&all_nodes[2]);
-	// all_nodes[6].calls.emplace_back(&all_nodes[3]);
-	// all_nodes[6].calls.emplace_back(&all_nodes[7]);
-
-	// all_nodes[7].name = "7";
-	// all_nodes[7].stack_use = 32;
-	// // all_nodes[7].calls.emplace_back(&all_nodes[4]);
-
-	// for (int i = 0; i < 8; i++) {
-	// 	depth_first_search(all_nodes[i], std::list<const func_node*>{&all_nodes[i]});
-	// }
-
-	// auto print_routes = []() {
-	// 	for (auto r : all_routes) {
-	// 		for (auto f : r) {
-	// 			std::cout << f->name << " ";
-	// 		}
-	// 		std::cout << std::endl;
-	// 	}
-	// };
-
 	if (HasCycle(all_nodes)) {
 		std::cerr << "Recursion detected! Terminating..." << std::endl;
 		std::terminate();
@@ -461,8 +305,6 @@ int main(int argc, char* argv[])
 	for (const auto& n : all_nodes) {
 		depth_first_search(n, std::list<const func_node*>{&n});
 	}
-
-	// print_routes();
 
 	auto find_max = []() {
 		int max{0};
