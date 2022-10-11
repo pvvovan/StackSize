@@ -7,6 +7,8 @@
 #include <string_view>
 #include <deque>
 #include <iterator>
+#include <algorithm>
+#include <queue>
 
 
 class Graph
@@ -276,7 +278,8 @@ public:
 	std::string name{};
 	std::string title{};
 	int stack_use{};
-	std::list<const func_node*> calls{};
+	bool visited{};
+	std::list<func_node*> calls{};
 };
 
 std::list<std::list<const func_node*>> all_routes{};
@@ -304,12 +307,56 @@ func_node& find_node(std::deque<func_node>& nodes, std::string title)
 	std::terminate();
 }
 
+static bool breadth_first_search(func_node* initial_node)
+{
+	std::queue<func_node*> queue{};
+	for (auto node : initial_node->calls) {
+		queue.emplace(node);
+	}
+	
+	bool cycle_detected{false};
+	while (!queue.empty()) {
+		func_node* node = queue.front();
+		queue.pop();
+		if (node == initial_node) {
+			cycle_detected = true;
+			break;
+		}
+		node->visited = true;
+		for (auto call : node->calls) {
+			if (!call->visited) {
+				queue.emplace(call);
+			}
+		}
+	}
+
+	return cycle_detected;
+}
+
+static bool HasCycle(std::deque<func_node>& graph)
+{
+	auto clear_visit = [](func_node& fn) { fn.visited = false; };
+	bool cycle_detected{false};
+	for (auto& node : graph) {
+		std::for_each(graph.begin(), graph.end(), clear_visit);
+		cycle_detected = breadth_first_search(&node);
+		if (cycle_detected) {
+			break;
+		}
+	}
+	return cycle_detected;
+}
+
 static std::deque<func_node> all_nodes{};
 
 int main(int argc, char* argv[])
 {
 	if (argc > 1) {
 		parsed_nodes pn = parse_nodes(argc, argv);
+		if (pn.status != 0) {
+			std::cerr << "Indirect calls are not supported" << std::endl;
+			std::terminate();
+		}
 		if (pn.status == 0) {
 			// check graph for recursion
 			Graph call_graph(pn.nodes.size());
@@ -344,7 +391,7 @@ int main(int argc, char* argv[])
 		std::cout << all_nodes.size() << std::endl;
 		for (const auto& ed : pn.edges) {
 			func_node& parent = find_node(all_nodes, ed.first);
-			const func_node& child = find_node(all_nodes, ed.second);
+			func_node& child = find_node(all_nodes, ed.second);
 			parent.calls.emplace_back(&child);
 		}
 	}
@@ -389,6 +436,7 @@ int main(int argc, char* argv[])
 
 	// all_nodes[7].name = "7";
 	// all_nodes[7].stack_use = 32;
+	// // all_nodes[7].calls.emplace_back(&all_nodes[4]);
 
 	// for (int i = 0; i < 8; i++) {
 	// 	depth_first_search(all_nodes[i], std::list<const func_node*>{&all_nodes[i]});
@@ -402,6 +450,13 @@ int main(int argc, char* argv[])
 	// 		std::cout << std::endl;
 	// 	}
 	// };
+
+	if (HasCycle(all_nodes)) {
+		std::cerr << "Recursion detected! Terminating..." << std::endl;
+		std::terminate();
+	} else {
+		std::cerr << "No cycle detected" << std::endl;
+	}
 
 	for (const auto& n : all_nodes) {
 		depth_first_search(n, std::list<const func_node*>{&n});

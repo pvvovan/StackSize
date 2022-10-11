@@ -37,7 +37,7 @@ double call(int a);
 
 double call2(int a, double d)
 {
-	// (f[a])(a);
+	// (f[a])(a); // simulate indirect call
 	f1(a);
 	f2(a);
 	f3(a);
